@@ -42,9 +42,19 @@ sudo apt-get install build-essential make python3-dev
 
 Установите Xcode Command Line Tools и Python 3 с заголовками разработки. `python3-config --cflags` и `python3-config --embed --ldflags` должны быть доступны из `PATH`.
 
+Для Homebrew-установки из formula в этом репозитории выполните `brew install ./Formula/simpl.rb`. Она собирает Simpl из исходников и использует Homebrew Python 3.12; опубликованный macOS-бинарник для этого не подходит, поскольку связан с Python Framework от python.org. Formula пока не опубликована в отдельном tap.
+
 ### Windows
 
-Используйте MSYS2 UCRT64 и установите `mingw-w64-ucrt-x86_64-gcc`, `mingw-w64-ucrt-x86_64-python` и `make`. Сборку выполняйте из окружения UCRT64.
+Windows installer требует заранее установленный MSYS2 в `C:\msys64` и Python 3.14 из окружения UCRT64. В терминале MSYS2 UCRT64 выполните:
+
+```sh
+pacman -S mingw-w64-ucrt-x86_64-python
+```
+
+Затем скачайте `simpl-<версия>-windows-setup.exe` со страницы GitHub Releases и запустите установщик. Он проверяет наличие стандартной библиотеки Python 3.14. Для запуска используйте ярлык Simpl в меню «Пуск» или `simpl.cmd` из каталога установки: скрипт задаёт `PYTHONHOME` и вызывает установленный бинарник. Сам установщик включает Simpl и необходимые DLL, но не поставляет Python runtime.
+
+Для сборки из исходников также нужны `mingw-w64-ucrt-x86_64-gcc` и `make`; сборку выполняйте из окружения UCRT64.
 
 ### Сборка и тесты
 

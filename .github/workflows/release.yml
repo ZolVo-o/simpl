@@ -85,17 +85,31 @@ jobs:
           package_dir="$(mktemp -d)"
           trap 'rm -rf "$package_dir"' EXIT
           version="${GITHUB_REF_NAME#v}"
-          cp simpl.exe README.md LICENSE CHANGELOG.md "$package_dir/"
+          mkdir -p dist/windows
+          cp simpl.exe "$package_dir/simpl-runner.exe"
+          cp tools/windows/simpl.cmd README.md LICENSE CHANGELOG.md "$package_dir/"
           cp -r docs examples "$package_dir/"
           ldd ./simpl.exe | awk '/=> \/ucrt64\/bin\// { print $3 }' | while read -r library; do
             cp "$library" "$package_dir/"
           done
           (cd "$package_dir" && zip -r "$GITHUB_WORKSPACE/dist/simpl-${version}-windows.zip" .)
+          cp -r "$package_dir"/* dist/windows/
+
+      - name: Install Inno Setup
+        if: runner.os == 'Windows'
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" tools/windows/simpl.iss
 
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.os }}
-          path: dist/*
+          path: dist/simpl-*
           if-no-files-found: error
 
   extension:
