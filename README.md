@@ -16,6 +16,20 @@ Simpl — небольшой экспериментальный язык про�
 
 ## Быстрый старт
 
+### Установка готового бинарника (Linux x86_64 / macOS)
+
+Скрипт скачает последний релиз в `~/.local/bin/simpl`. Для запуска нужен Python 3.12 runtime; на macOS также требуется Python 3.12 framework от python.org.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ZolVo-o/simpl/main/tools/install.sh | sh
+```
+
+Для установки в другой каталог задайте `SIMPL_INSTALL_DIR`:
+
+```sh
+SIMPL_INSTALL_DIR="$HOME/bin" sh tools/install.sh
+```
+
 ### Linux
 
 На Debian/Ubuntu установите компилятор C, Make и заголовки Python:
