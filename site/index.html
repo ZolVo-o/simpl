@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Simpl — небольшой экспериментальный язык программирования с русскими ключевыми словами.">
+  <title>Simpl — язык программирования по-русски</title>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="assets/site.css">
+  <link rel="stylesheet" href="assets/prism.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Simpl — главная"><span class="brand-mark">с.</span><span>Simpl</span></a>
+    <button class="menu-toggle" aria-label="Открыть меню" aria-expanded="false">☰</button>
+    <nav class="site-nav" aria-label="Главная навигация">
+      <a class="active" href="index.html">Главная</a>
+      <a href="install.html">Установка</a>
+      <a href="docs.html">Документация</a>
+      <a href="examples.html">Примеры</a>
+      <a href="blog.html">Блог</a>
+    </nav>
+    <a class="header-cta" href="https://github.com/ZolVo-o/simpl">GitHub <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="status-dot"></span> Экспериментальный язык · версия 0.1.0</p>
+        <h1>Программирование,<br>которое говорит <em>по-русски.</em></h1>
+        <p class="hero-lead">Simpl — небольшой язык с русскими ключевыми словами. Он помогает сосредоточиться на идеях и посмотреть, как устроены лексер, компилятор и виртуальная машина.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="install.html">Установить Simpl <span aria-hidden="true">→</span></a>
+          <a class="button button-quiet" href="docs.html">Изучить язык</a>
+        </div>
+        <div class="hero-meta"><span>C99</span><span>Открытый исходный код</span><span>MIT</span></div>
+      </div>
+      <div class="code-window" aria-label="Пример программы Simpl">
+        <div class="window-bar"><div class="window-dots"><i></i><i></i><i></i></div><span>привет.simpl</span><span class="window-lang">SIMPL</span></div>
+        <pre><code class="language-simpl">функция приветствие(имя)
+    если имя == "мир"
+        вернуть "Привет, мир!"
+    иначе
+        вернуть "Привет, " + имя
+
+пусть сообщение = приветствие("мир")
+сказать сообщение</code></pre>
+        <div class="code-caption"><span class="caption-check">✓</span> Читаемый синтаксис. Настоящий компилятор.</div>
+      </div>
+      <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+    </section>
+
+    <section class="intro-band">
+      <div class="wrap intro-grid">
+        <p class="eyebrow">НЕ ЕЩЁ ОДИН ЯЗЫК ДЛЯ ВСЕГО</p>
+        <p class="intro-statement">Учебный проект, который можно читать <span>сверху вниз</span> — от исходного кода до байткода.</p>
+        <p class="muted">Simpl написан на C99 и использует Python runtime для значений и операций. Исходный код проходит собственные лексер, парсер и компилятор, а затем исполняется VM.</p>
+      </div>
+    </section>
+
+    <section class="section wrap">
+      <div class="section-heading"><div><p class="eyebrow">С ЧЕГО НАЧАТЬ</p><h2>Маленькие шаги,<br>понятный результат.</h2></div><a class="text-link" href="docs.html">Вся документация <span>→</span></a></div>
+      <div class="feature-grid">
+        <article class="feature-card"><span class="feature-number">01</span><div class="feature-icon">↳</div><h3>Пиши привычными словами</h3><p>Объявляй переменные, описывай условия и выводи результат русскими ключевыми словами.</p></article>
+        <article class="feature-card"><span class="feature-number">02</span><div class="feature-icon">⌘</div><h3>Изучай устройство языка</h3><p>В репозитории открыты исходники лексера, парсера, компилятора, VM и сериализации.</p></article>
+        <article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">↗</div><h3>Пробуй на примерах</h3><p>Функции, рекурсия, коллекции, циклы и обработка runtime-ошибок — в коротких программах.</p></article>
+      </div>
+    </section>
+
+    <section class="cta-strip wrap"><div><p class="eyebrow">ПЕРВАЯ ПРОГРАММА</p><h2>Начни с «Привет, мир!»</h2><p>Скачай релиз или собери Simpl из исходников.</p></div><a class="button button-light" href="install.html">Как установить <span>→</span></a></section>
+  </main>
+
+  <footer class="site-footer"><div class="wrap footer-inner"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><p>Небольшой язык. Большое поле для экспериментов.</p><a href="https://github.com/ZolVo-o/simpl">Исходный код на GitHub ↗</a></div></footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="assets/prism-simpl.js"></script>
+  <script src="assets/site.js"></script>
+</body>
+</html>

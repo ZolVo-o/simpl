@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Примеры программ на Simpl с подсветкой синтаксиса."><title>Примеры — Simpl</title><link rel="stylesheet" href="assets/site.css"><link rel="stylesheet" href="assets/prism.css"></head>
+<body>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><button class="menu-toggle" aria-label="Открыть меню" aria-expanded="false">☰</button><nav class="site-nav" aria-label="Главная навигация"><a href="index.html">Главная</a><a href="install.html">Установка</a><a href="docs.html">Документация</a><a class="active" href="examples.html">Примеры</a><a href="blog.html">Блог</a></nav><a class="header-cta" href="https://github.com/ZolVo-o/simpl">GitHub <span>↗</span></a></header>
+  <main class="wrap page-main"><div class="page-heading"><p class="eyebrow">КОД ГОВОРИТ САМ ЗА СЕБЯ</p><h1>Примеры Simpl</h1><p>Короткие программы на актуальном синтаксисе языка. Открой каждую целиком в репозитории.</p></div>
+    <div class="examples-grid">
+      <article class="example-card example-wide"><div class="example-top"><div><span class="doc-tag">ПЕРВОЕ ЗНАКОМСТВО</span><h2>Привет, мир</h2></div><a href="https://github.com/ZolVo-o/simpl/blob/main/examples/hello.simpl" aria-label="Открыть hello.simpl на GitHub">↗</a></div><pre><code class="language-simpl"># Первое знакомство: строки и вывод
+сказать "Привет, мир!"
+пусть имя = "Мира"
+сказать "Привет, " + имя</code></pre></article>
+      <article class="example-card"><div class="example-top"><div><span class="doc-tag">ФУНКЦИИ</span><h2>Факториал</h2></div><a href="https://github.com/ZolVo-o/simpl/blob/main/examples/factorial.simpl" aria-label="Открыть factorial.simpl на GitHub">↗</a></div><pre><code class="language-simpl">функция факториал(число)
+    если число &lt;= 1
+        вернуть 1
+    иначе
+        вернуть число * факториал(число - 1)
+
+сказать факториал(5)</code></pre></article>
+      <article class="example-card"><div class="example-top"><div><span class="doc-tag">КОЛЛЕКЦИИ</span><h2>Списки</h2></div><a href="https://github.com/ZolVo-o/simpl/blob/main/examples/lists.simpl" aria-label="Открыть lists.simpl на GitHub">↗</a></div><pre><code class="language-simpl">пусть числа = [2, 4, 6]
+числа[1] = 5
+для каждого число в числа
+    сказать число
+сказать числа[0]</code></pre></article>
+      <article class="example-card"><div class="example-top"><div><span class="doc-tag">СЛОВАРИ</span><h2>Профиль игрока</h2></div><a href="https://github.com/ZolVo-o/simpl/blob/main/examples/dictionaries.simpl" aria-label="Открыть dictionaries.simpl на GitHub">↗</a></div><pre><code class="language-simpl">пусть профиль = {"имя": "Ли", "очки": 10}
+сказать профиль["имя"]
+профиль["очки"] = 15
+сказать профиль["очки"]</code></pre></article>
+      <article class="example-card"><div class="example-top"><div><span class="doc-tag">ОБРАБОТКА ОШИБОК</span><h2>Попробовать и поймать</h2></div><a href="https://github.com/ZolVo-o/simpl/blob/main/examples/try-catch.simpl" aria-label="Открыть try-catch.simpl на GitHub">↗</a></div><pre><code class="language-simpl">попробовать
+    пусть результат = 1 / 0
+поймать ошибка
+    сказать "Перехвачено: " + ошибка
+сказать "Программа продолжает работу"</code></pre></article>
+    </div>
+    <div class="center-cta"><p>Ещё примеры: циклы, строки, условия и fizzbuzz.</p><a class="text-link" href="https://github.com/ZolVo-o/simpl/tree/main/examples">Все примеры в репозитории ↗</a></div>
+  </main>
+  <footer class="site-footer"><div class="wrap footer-inner"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><p>Небольшой язык. Большое поле для экспериментов.</p><a href="https://github.com/ZolVo-o/simpl">Исходный код на GitHub ↗</a></div></footer><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script><script src="assets/prism-simpl.js"></script><script src="assets/site.js"></script>
+</body></html>

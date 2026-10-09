@@ -120,8 +120,9 @@ src/                    # лексер, парсер, компилятор, VM �
 tests/                  # тесты языка и CLI
 examples/               # программы Simpl
 docs/                   # справочник и учебник
+site/                   # сайт проекта для GitHub Pages
 editors/vscode/         # расширение VS Code
-.github/workflows/      # CI и сборка релизов
+.github/workflows/      # CI, сборка релизов и публикация сайта
 ```
 
 ## Участие в разработке

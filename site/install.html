@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Как установить Simpl на Linux, macOS и Windows.">
+  <title>Установка — Simpl</title><link rel="stylesheet" href="assets/site.css"><link rel="stylesheet" href="assets/prism.css">
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><button class="menu-toggle" aria-label="Открыть меню" aria-expanded="false">☰</button><nav class="site-nav" aria-label="Главная навигация"><a href="index.html">Главная</a><a class="active" href="install.html">Установка</a><a href="docs.html">Документация</a><a href="examples.html">Примеры</a><a href="blog.html">Блог</a></nav><a class="header-cta" href="https://github.com/ZolVo-o/simpl">GitHub <span>↗</span></a></header>
+  <main class="wrap page-main">
+    <div class="page-heading"><p class="eyebrow">БЫСТРЫЙ СТАРТ</p><h1>Установка Simpl</h1><p>Выбери свою платформу. Для всех готовых бинарников потребуется совместимый Python runtime.</p></div>
+    <div class="notice"><strong>Важно о runtime.</strong> Опубликованные Linux- и macOS-бинарники собраны с Python 3.12; Windows-архив v0.1.0 — с Python 3.14. Архивы и установщики Simpl не включают Python runtime.</div>
+    <div class="install-layout">
+      <aside class="install-toc"><a href="#linux">Linux</a><a href="#macos">macOS</a><a href="#windows">Windows</a><a href="#source">Из исходников</a></aside>
+      <div class="install-content">
+        <section id="linux" class="install-section"><p class="eyebrow">01 · LINUX X86_64</p><h2>Linux</h2><p>На Debian или Ubuntu можно установить готовый бинарник скриптом. Нужны glibc и Python 3.12 runtime.</p><pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/ZolVo-o/simpl/main/tools/install.sh | sh</code></pre><p>Скрипт установит <code>simpl</code> в <code>~/.local/bin</code>. Если каталог ещё не в <code>PATH</code>, скрипт покажет команду для настройки. Alpine/musl этим бинарником не поддерживается.</p></section>
+        <section id="macos" class="install-section"><p class="eyebrow">02 · MACOS</p><h2>macOS</h2><p>Установщик поддерживает Intel и Apple Silicon. Для опубликованного бинарника нужен Python 3.12 Framework от python.org.</p><pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/ZolVo-o/simpl/main/tools/install.sh | sh</code></pre><p>Homebrew formula находится в репозитории и собирает проект из исходников под Homebrew Python 3.12. Официального tap пока нет. Склонируй репозиторий и установи formula из него:</p><pre><code class="language-bash">brew install ./Formula/simpl.rb</code></pre></section>
+        <section id="windows" class="install-section"><p class="eyebrow">03 · WINDOWS X64</p><h2>Windows</h2><p>Установщик Inno Setup подготовлен для следующего релиза, но пока не опубликован. В релизе v0.1.0 есть ZIP-архив, собранный для MSYS2 UCRT64 и Python 3.14; для стабильной установки из исходников открой терминал MSYS2 UCRT64 и выполни:</p><pre><code class="language-bash">pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-python make
+make
+./simpl.exe run examples/hello.simpl</code></pre><p>Уже скачанные релизы Simpl доступны на GitHub.</p><p><a class="text-link" href="https://github.com/ZolVo-o/simpl/releases">Открыть GitHub Releases ↗</a></p></section>
+        <section id="source" class="install-section"><p class="eyebrow">04 · ДЛЯ РАЗРАБОТЧИКОВ</p><h2>Сборка из исходников</h2><p>Нужны GCC, Make и заголовки Python. На Debian/Ubuntu:</p><pre><code class="language-bash">sudo apt-get install build-essential make python3-dev
+make
+make test</code></pre><p>Для Windows-сборки используй окружение MSYS2 UCRT64 и пакеты <code>mingw-w64-ucrt-x86_64-gcc</code>, <code>mingw-w64-ucrt-x86_64-python</code> и <code>make</code>.</p></section>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="wrap footer-inner"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><p>Небольшой язык. Большое поле для экспериментов.</p><a href="https://github.com/ZolVo-o/simpl">Исходный код на GitHub ↗</a></div></footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script><script src="assets/prism-simpl.js"></script><script src="assets/site.js"></script>
+</body>
+</html>
