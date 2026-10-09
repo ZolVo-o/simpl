@@ -1,0 +1,101 @@
+{
+  "name": "simpl",
+  "displayName": "Simpl",
+  "description": "Подсветка и инструменты разработки для языка Simpl",
+  "version": "0.1.0",
+  "publisher": "simpl-lang",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:simpl"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "simpl",
+        "aliases": [
+          "Simpl",
+          "simpl"
+        ],
+        "extensions": [
+          ".sim"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/simpl.png",
+          "dark": "./icons/simpl.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "simpl",
+        "scopeName": "source.simpl",
+        "path": "./syntaxes/simpl.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "simpl",
+        "path": "./snippets/simpl.json"
+      }
+    ],
+    "commands": [
+      {"command": "simpl.run", "title": "Запустить Simpl"},
+      {"command": "simpl.compile", "title": "Компилировать Simpl"},
+      {"command": "simpl.disasm", "title": "Показать байткод Simpl"}
+    ],
+    "keybindings": [
+      {
+        "command": "simpl.run",
+        "key": "f5",
+        "when": "editorTextFocus && editorLangId == simpl"
+      },
+      {
+        "command": "simpl.compile",
+        "key": "ctrl+b",
+        "when": "editorTextFocus && editorLangId == simpl"
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "simpl",
+        "owner": "simpl",
+        "fileLocation": ["absolute"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+error:\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": "error",
+          "message": 4
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Simpl",
+      "properties": {
+        "simpl.path": {
+          "type": "string",
+          "default": "simpl",
+          "description": "Путь к исполняемому файлу Simpl."
+        },
+        "simpl.autoCompileOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Компилировать файл .sim при сохранении."
+        },
+        "simpl.showBytecode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Открывать дизассемблированный байткод после компиляции."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+/simpl
+/simpl.exe
+/test_lexer
+/test_parser
+/test_compile
+/test-input.txt
+/*.simc
+/dist/
+*.vsix
+/editors/vscode/node_modules/

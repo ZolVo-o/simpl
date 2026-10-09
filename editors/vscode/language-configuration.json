@@ -1,0 +1,28 @@
+{
+  "comments": {
+    "lineComment": "#"
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    {"open": "{", "close": "}"},
+    {"open": "[", "close": "]"},
+    {"open": "(", "close": ")"},
+    {"open": "\"", "close": "\"", "notIn": ["string", "comment"]},
+    {"open": "'", "close": "'", "notIn": ["string", "comment"]}
+  ],
+  "surroundingPairs": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""],
+    ["'", "'"]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^\\s*(?:если\\b.*|иначе\\b.*|пока\\b.*|повторить\\b.*|для\\b.*|функция\\b.*|попробовать\\b.*|поймать\\b.*)$",
+    "decreaseIndentPattern": "^\\s*(?:иначе|поймать)\\b.*$"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Simpl",
+  "scopeName": "source.simpl",
+  "patterns": [
+    {"include": "#comments"},
+    {"include": "#strings"},
+    {"include": "#numbers"},
+    {"include": "#functions"},
+    {"include": "#builtins"},
+    {"include": "#constants"},
+    {"include": "#keywords"},
+    {"include": "#operators"},
+    {"include": "#variables"}
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.simpl",
+          "begin": "#",
+          "beginCaptures": {"0": {"name": "punctuation.definition.comment.simpl"}},
+          "end": "$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.simpl",
+          "begin": "\"",
+          "beginCaptures": {"0": {"name": "punctuation.definition.string.begin.simpl"}},
+          "end": "\"|$",
+          "endCaptures": {"0": {"name": "punctuation.definition.string.end.simpl"}},
+          "patterns": [
+            {"name": "constant.character.escape.simpl", "match": "\\\\."}
+          ]
+        },
+        {
+          "name": "string.quoted.single.simpl",
+          "begin": "'",
+          "beginCaptures": {"0": {"name": "punctuation.definition.string.begin.simpl"}},
+          "end": "'|$",
+          "endCaptures": {"0": {"name": "punctuation.definition.string.end.simpl"}},
+          "patterns": [
+            {"name": "constant.character.escape.simpl", "match": "\\\\."}
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.simpl",
+      "match": "\\b[0-9]+(?:\\.[0-9]+)?\\b"
+    },
+    "builtins": {
+      "name": "support.function.builtin.simpl",
+      "match": "\\b(?:длина|тип|верх|низ|разделить|соединить)(?=\\s*\\()"
+    },
+    "constants": {
+      "name": "constant.language.simpl",
+      "match": "\\b(?:да|нет)\\b"
+    },
+    "keywords": {
+      "name": "keyword.control.simpl",
+      "match": "\\b(?:пусть|сказать|спросить|если|иначе|пока|повторить|раз|как|вернуть|и|или|не|для|каждого|в|попробовать|поймать)\\b"
+    },
+    "operators": {
+      "name": "keyword.operator.simpl",
+      "match": "(?:\\*\\*|==|!=|<=|>=|[+*/%<>=-])"
+    },
+    "functions": {
+      "match": "\\b(функция)\\s+([\\p{L}_][\\p{L}\\p{N}_]*)",
+      "captures": {
+        "1": {"name": "keyword.control.simpl"},
+        "2": {"name": "entity.name.function.simpl"}
+      }
+    },
+    "variables": {
+      "name": "variable.other.simpl",
+      "match": "[\\p{L}_][\\p{L}\\p{N}_]*"
+    }
+  }
+}
