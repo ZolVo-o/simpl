@@ -14,6 +14,9 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 static char *read_file(const char *path, size_t *length)
 {
@@ -224,6 +227,15 @@ static int write_project_file(const char *path, const char *content)
     return ok;
 }
 
+static int create_directory(const char *path)
+{
+#ifdef _WIN32
+    return _mkdir(path);
+#else
+    return mkdir(path, 0777);
+#endif
+}
+
 static int command_new(const char *directory)
 {
     size_t length = strlen(directory);
@@ -234,7 +246,7 @@ static int command_new(const char *directory)
         free(main_path); free(readme_path);
         return fail_cli("Недостаточно памяти для пути проекта");
     }
-    if (mkdir(directory, 0777) != 0) {
+    if (create_directory(directory) != 0) {
         fprintf(stderr, "Не удалось создать каталог «%s»: %s\n",
                 directory, strerror(errno));
         free(main_path); free(readme_path);
