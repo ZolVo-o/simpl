@@ -4,12 +4,26 @@
 #include "opcodes.h"
 
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define VM_STACK_MAX 256
 #define VM_FRAME_MAX 256
 #define VM_HANDLER_MAX 256
+
+static volatile sig_atomic_t vm_interrupted;
+
+static void handle_interrupt(int signal_number)
+{
+    (void)signal_number;
+    vm_interrupted = 1;
+}
+
+int vm_was_interrupted(void)
+{
+    return vm_interrupted != 0;
+}
 
 typedef struct {
     size_t return_ip;
@@ -167,7 +181,8 @@ static PyObject *builtin_type(PyObject *value)
     return PyUnicode_FromString(name);
 }
 
-static PyObject *call_builtin(uint32_t builtin, PyObject *const *args, uint32_t argc)
+static PyObject *call_builtin(uint32_t builtin, PyObject *const *args,
+                              uint32_t argc, int program_argc, char **program_argv)
 {
     switch (builtin) {
     case BUILTIN_LENGTH: {
@@ -201,6 +216,22 @@ static PyObject *call_builtin(uint32_t builtin, PyObject *const *args, uint32_t 
         if (argc == 2) PyErr_SetString(PyExc_TypeError,
                                        "соединить ожидает список и строку-разделитель");
         break;
+    case BUILTIN_ARGUMENTS:
+        if (argc != 0) break;
+        {
+            PyObject *result = PyList_New(program_argc);
+            int i;
+            if (result == NULL) return NULL;
+            for (i = 0; i < program_argc; ++i) {
+                PyObject *value = PyUnicode_DecodeFSDefault(program_argv[i]);
+                if (value == NULL) {
+                    Py_DECREF(result);
+                    return NULL;
+                }
+                PyList_SET_ITEM(result, i, value);
+            }
+            return result;
+        }
     default:
         PyErr_SetString(PyExc_RuntimeError, "неизвестная встроенная функция");
         return NULL;
@@ -212,10 +243,16 @@ static PyObject *call_builtin(uint32_t builtin, PyObject *const *args, uint32_t 
 
 int vm_run(const Chunk *chunk)
 {
-    return vm_run_with_source(chunk, NULL);
+    return vm_run_with_args(chunk, NULL, 0, NULL);
 }
 
 int vm_run_with_source(const Chunk *chunk, const char *source_path)
+{
+    return vm_run_with_args(chunk, source_path, 0, NULL);
+}
+
+int vm_run_with_args(const Chunk *chunk, const char *source_path,
+                     int program_argc, char **program_argv)
 {
     PyObject *stack[VM_STACK_MAX] = { NULL };
     PyObject **globals = calloc(chunk->name_count == 0 ? 1 : chunk->name_count,
@@ -229,10 +266,17 @@ int vm_run_with_source(const Chunk *chunk, const char *source_path)
     size_t instruction_ip = 0;
     size_t i;
     int success = 0;
+    void (*previous_sigint)(int);
 
     if (globals == NULL) return 0;
+    vm_interrupted = 0;
+    previous_sigint = signal(SIGINT, handle_interrupt);
 dispatch:
     while (ip < chunk->code_count) {
+        if (vm_interrupted) {
+            fputs("Прервано пользователем\n", stderr);
+            goto done;
+        }
         instruction_ip = ip;
         uint8_t opcode = chunk->code[ip++];
         uint32_t index;
@@ -456,7 +500,8 @@ dispatch:
                 goto done;
             }
             base = stack_count - argc;
-            result = call_builtin(builtin, stack + base, argc);
+            result = call_builtin(builtin, stack + base, argc,
+                                  program_argc, program_argv);
             for (arg = 0; arg < argc; ++arg) {
                 Py_DECREF(stack[base + arg]);
                 stack[base + arg] = NULL;
@@ -683,5 +728,6 @@ done:
     }
     for (i = 0; i < chunk->name_count; ++i) Py_XDECREF(globals[i]);
     free(globals);
+    if (previous_sigint != SIG_ERR) signal(SIGINT, previous_sigint);
     return success;
 }

@@ -5,5 +5,8 @@
 
 int vm_run(const Chunk *chunk);
 int vm_run_with_source(const Chunk *chunk, const char *source_path);
+int vm_run_with_args(const Chunk *chunk, const char *source_path,
+                     int argc, char **argv);
+int vm_was_interrupted(void);
 
 #endif

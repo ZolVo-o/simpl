@@ -6,5 +6,7 @@
 #include <stdio.h>
 
 int disasm_dump(const Chunk *chunk, FILE *output);
+int disasm_dump_options(const Chunk *chunk, FILE *output,
+                        int no_names, int stats);
 
 #endif

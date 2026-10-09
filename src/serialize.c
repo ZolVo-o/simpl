@@ -160,41 +160,44 @@ static PyObject *load_constant(Reader *reader)
     return NULL;
 }
 
-int serialize_save(const Chunk *chunk, const char *path)
+int serialize_write(const Chunk *chunk, FILE *file)
 {
-    FILE *file;
     size_t i, j;
-    int ok = 0;
     if (chunk->constant_count > UINT32_MAX || chunk->name_count > UINT32_MAX
         || chunk->code_count > UINT32_MAX || chunk->function_count > UINT32_MAX)
         return 0;
-    file = fopen(path, "wb");
-    if (file == NULL) return 0;
     if (!write_bytes(file, simc_magic, sizeof(simc_magic))
         || !write_u32(file, SIMC_VERSION)
-        || !write_u32(file, (uint32_t)chunk->constant_count)) goto done;
+        || !write_u32(file, (uint32_t)chunk->constant_count)) return 0;
     for (i = 0; i < chunk->constant_count; ++i)
-        if (!save_constant(file, chunk->constants[i])) goto done;
-    if (!write_u32(file, (uint32_t)chunk->name_count)) goto done;
+        if (!save_constant(file, chunk->constants[i])) return 0;
+    if (!write_u32(file, (uint32_t)chunk->name_count)) return 0;
     for (i = 0; i < chunk->name_count; ++i)
-        if (!write_string(file, chunk->names[i], strlen(chunk->names[i]))) goto done;
+        if (!write_string(file, chunk->names[i], strlen(chunk->names[i]))) return 0;
     if (!write_u32(file, (uint32_t)chunk->code_count)
         || !write_bytes(file, chunk->code, chunk->code_count)
-        || !write_u32(file, (uint32_t)chunk->code_count)) goto done;
+        || !write_u32(file, (uint32_t)chunk->code_count)) return 0;
     for (i = 0; i < chunk->code_count; ++i)
-        if (!write_u32(file, chunk->lines[i])) goto done;
-    if (!write_u32(file, (uint32_t)chunk->function_count)) goto done;
+        if (!write_u32(file, chunk->lines[i])) return 0;
+    if (!write_u32(file, (uint32_t)chunk->function_count)) return 0;
     for (i = 0; i < chunk->function_count; ++i) {
         const ChunkFunction *function = &chunk->functions[i];
         if (function->parameter_count > UINT32_MAX || function->address > UINT32_MAX
             || !write_u32(file, function->name_index)
-            || !write_u32(file, (uint32_t)function->parameter_count)) goto done;
+            || !write_u32(file, (uint32_t)function->parameter_count)) return 0;
         for (j = 0; j < function->parameter_count; ++j)
-            if (!write_u32(file, function->parameters[j])) goto done;
-        if (!write_u32(file, (uint32_t)function->address)) goto done;
+            if (!write_u32(file, function->parameters[j])) return 0;
+        if (!write_u32(file, (uint32_t)function->address)) return 0;
     }
-    ok = fflush(file) == 0 && !ferror(file);
-done:
+    return fflush(file) == 0 && !ferror(file);
+}
+
+int serialize_save(const Chunk *chunk, const char *path)
+{
+    FILE *file = fopen(path, "wb");
+    int ok;
+    if (file == NULL) return 0;
+    ok = serialize_write(chunk, file);
     if (fclose(file) != 0) ok = 0;
     return ok;
 }

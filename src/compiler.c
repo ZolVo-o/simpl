@@ -25,9 +25,13 @@ static int find_function(const Chunk *chunk, const char *name, uint32_t *index)
 static int find_builtin(const char *name, uint32_t *index)
 {
     static const char *const names[] = {
-        "длина", "тип", "верх", "низ", "разделить", "соединить"
+        "длина", "тип", "верх", "низ", "разделить", "соединить", "аргументы"
     };
     size_t i;
+    if (strcmp(name, "arguments") == 0) {
+        *index = BUILTIN_ARGUMENTS;
+        return 1;
+    }
     for (i = 0; i < sizeof(names) / sizeof(names[0]); ++i) {
         if (strcmp(name, names[i]) == 0) {
             *index = (uint32_t)i;

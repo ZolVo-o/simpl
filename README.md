@@ -87,7 +87,22 @@ PYTHONMALLOC=debug ./test_compile
 ./simpl compile hello.sim       # создаёт hello.simc
 ./simpl compile hello.sim -o build/hello.simc
 ./simpl disasm hello.simc
+./simpl check hello.sim
+./simpl fmt hello.sim
+./simpl doc hello.sim
+./simpl new my-project
+./simpl repl
 ```
+
+`run` принимает исходный `.sim` или скомпилированный `.simc`; аргументы после файла доступны в программе через `arguments()`. Разделитель `--` можно использовать, чтобы явно отделить аргументы CLI:
+
+```sh
+./simpl run hello.sim first -- --option
+```
+
+`compile ... -o -` записывает байткод в stdout. `disasm` поддерживает `--no-names` и `--stats`. Команда `doc` выводит строки комментариев, начинающиеся с `##`, а `fmt` форматирует исходный файл на месте. В REPL пустая строка выполняет введённый блок, Ctrl+D завершает работу.
+
+Ошибки CLI и файлового ввода/вывода завершаются кодом 1, ошибки компиляции — 2, ошибки времени выполнения — 3; прерывание Ctrl+C возвращает 130. Справка доступна через `simpl --help`, версия — через `simpl --version`.
 
 Если `simpl` установлен в `PATH`, префикс `./` не нужен.
 

@@ -27,9 +27,18 @@ static int read_u32(const Chunk *chunk, size_t *offset, uint32_t *value)
     return 1;
 }
 
-int disasm_dump(const Chunk *chunk, FILE *output)
+int disasm_dump_options(const Chunk *chunk, FILE *output, int no_names, int stats)
 {
+    static const char *const names[] = {
+        "CONST", "LOAD", "STORE", "SAY", "ADD", "SUB", "MUL", "DIV",
+        "MOD", "POW", "EQ", "NE", "LT", "LE", "GT", "GE", "AND", "OR",
+        "NEG", "NOT", "JUMP", "JUMP_IF_FALSE", "CALL", "RETURN",
+        "MAKE_LIST", "MAKE_DICT", "INDEX_GET", "INDEX_SET", "GET_ITER",
+        "ITER_NEXT", "POP", "HALT", "ASK", "CALL_BUILTIN", "TRY_BEGIN", "TRY_END"
+    };
+    size_t counts[sizeof(names) / sizeof(names[0])] = { 0 };
     size_t offset = 0;
+    size_t instruction_count = 0;
     while (offset < chunk->code_count) {
         size_t instruction = offset;
         uint8_t opcode = chunk->code[offset++];
@@ -39,6 +48,8 @@ int disasm_dump(const Chunk *chunk, FILE *output)
             fprintf(output, "%04lu <invalid %u>\n", (unsigned long)instruction, opcode);
             return 0;
         }
+        ++counts[opcode];
+        ++instruction_count;
         fprintf(output, "%04lu line %u %-14s", (unsigned long)instruction,
                 instruction < chunk->code_count ? chunk->lines[instruction] : 0, name);
         switch (opcode) {
@@ -57,7 +68,8 @@ int disasm_dump(const Chunk *chunk, FILE *output)
         case OP_LOAD:
         case OP_STORE:
             if (!read_u32(chunk, &offset, &first) || first >= chunk->name_count) return 0;
-            fprintf(output, "%u (%s)", first, chunk->names[first]);
+            if (no_names) fprintf(output, "%u", first);
+            else fprintf(output, "%u (%s)", first, chunk->names[first]);
             break;
         case OP_CALL:
         case OP_CALL_BUILTIN:
@@ -79,5 +91,20 @@ int disasm_dump(const Chunk *chunk, FILE *output)
         fputc('\n', output);
         if (ferror(output)) return 0;
     }
+    if (stats) {
+        size_t i;
+        fprintf(output, "\nСтатистика: байткод — %lu байт, инструкций — %lu\n",
+                (unsigned long)chunk->code_count,
+                (unsigned long)instruction_count);
+        for (i = 0; i < sizeof(names) / sizeof(names[0]); ++i)
+            if (counts[i] != 0)
+                fprintf(output, "  %-14s %lu\n", names[i],
+                        (unsigned long)counts[i]);
+    }
     return !ferror(output);
+}
+
+int disasm_dump(const Chunk *chunk, FILE *output)
+{
+    return disasm_dump_options(chunk, output, 0, 0);
 }

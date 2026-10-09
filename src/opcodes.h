@@ -46,7 +46,8 @@ typedef enum {
     BUILTIN_UPPER,
     BUILTIN_LOWER,
     BUILTIN_SPLIT,
-    BUILTIN_JOIN
+    BUILTIN_JOIN,
+    BUILTIN_ARGUMENTS
 } BuiltinId;
 
 #endif
