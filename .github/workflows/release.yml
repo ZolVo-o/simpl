@@ -41,10 +41,15 @@ jobs:
         if: runner.os != 'Windows'
         run: make clean && make && make test
 
-      - name: Build and test (Windows)
+      - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: make clean && make && make test
+        run: make clean && make
+
+      - name: Test (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: make test
 
       - name: Package Unix archive
         if: runner.os != 'Windows'
