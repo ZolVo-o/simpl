@@ -33,7 +33,7 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-python make
+          install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-python make diffutils
 
       - name: Build and test
         if: runner.os != 'Windows'
