@@ -2,7 +2,8 @@
   "name": "simpl",
   "displayName": "Simpl",
   "description": "Подсветка и инструменты разработки для языка Simpl",
-  "version": "0.1.0",
+  "version": "0.2.1",
+  "icon": "./icons/simpl-extension.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/ZolVo-o/simpl.git"
@@ -16,7 +17,20 @@
   ],
   "main": "./extension.js",
   "activationEvents": [
-    "onLanguage:simpl"
+    "onLanguage:simpl",
+    "onCommand:simpl.run",
+    "onCommand:simpl.runWithArguments",
+    "onCommand:simpl.compile",
+    "onCommand:simpl.compileAs",
+    "onCommand:simpl.check",
+    "onCommand:simpl.format",
+    "onCommand:simpl.doc",
+    "onCommand:simpl.new",
+    "onCommand:simpl.repl",
+    "onCommand:simpl.help",
+    "onCommand:simpl.version",
+    "onCommand:simpl.disasm",
+    "onCommand:simpl.disasmOptions"
   ],
   "contributes": {
     "languages": [
@@ -27,12 +41,13 @@
           "simpl"
         ],
         "extensions": [
-          ".sim"
+          ".sim",
+          ".simpl"
         ],
         "configuration": "./language-configuration.json",
         "icon": {
-          "light": "./icons/simpl.png",
-          "dark": "./icons/simpl.png"
+          "light": "./icons/simpl-extension.png",
+          "dark": "./icons/simpl-extension.png"
         }
       }
     ],
@@ -51,8 +66,18 @@
     ],
     "commands": [
       {"command": "simpl.run", "title": "Запустить Simpl"},
+      {"command": "simpl.runWithArguments", "title": "Запустить Simpl с аргументами"},
       {"command": "simpl.compile", "title": "Компилировать Simpl"},
-      {"command": "simpl.disasm", "title": "Показать байткод Simpl"}
+      {"command": "simpl.compileAs", "title": "Компилировать Simpl в файл…"},
+      {"command": "simpl.check", "title": "Проверить файл Simpl"},
+      {"command": "simpl.format", "title": "Форматировать файл Simpl"},
+      {"command": "simpl.doc", "title": "Извлечь документацию Simpl"},
+      {"command": "simpl.new", "title": "Создать проект Simpl"},
+      {"command": "simpl.repl", "title": "Открыть Simpl REPL"},
+      {"command": "simpl.help", "title": "Справка Simpl CLI"},
+      {"command": "simpl.version", "title": "Версия Simpl CLI"},
+      {"command": "simpl.disasm", "title": "Показать байткод Simpl"},
+      {"command": "simpl.disasmOptions", "title": "Показать байткод Simpl с параметрами"}
     ],
     "keybindings": [
       {

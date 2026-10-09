@@ -17,6 +17,14 @@
     "comments": {
       "patterns": [
         {
+          "name": "comment.block.documentation.simpl",
+          "begin": "^\\s*(##)",
+          "beginCaptures": {
+            "1": {"name": "punctuation.definition.comment.simpl"}
+          },
+          "end": "$"
+        },
+        {
           "name": "comment.line.number-sign.simpl",
           "begin": "#",
           "beginCaptures": {"0": {"name": "punctuation.definition.comment.simpl"}},
@@ -54,7 +62,7 @@
     },
     "builtins": {
       "name": "support.function.builtin.simpl",
-      "match": "\\b(?:длина|тип|верх|низ|разделить|соединить)(?=\\s*\\()"
+      "match": "\\b(?:длина|тип|верх|низ|разделить|соединить|arguments)(?=\\s*\\()"
     },
     "constants": {
       "name": "constant.language.simpl",
