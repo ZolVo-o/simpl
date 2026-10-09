@@ -16,7 +16,9 @@
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
+#define TokenType Win32TokenType
 #include <windows.h>
+#undef TokenType
 #endif
 
 static char *read_file(const char *path, size_t *length)
