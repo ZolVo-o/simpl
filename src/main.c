@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
+#include <windows.h>
 #endif
 
 static char *read_file(const char *path, size_t *length)
@@ -236,6 +237,15 @@ static int create_directory(const char *path)
 #endif
 }
 
+static int replace_file(const char *source, const char *destination)
+{
+#ifdef _WIN32
+    return MoveFileExA(source, destination, MOVEFILE_REPLACE_EXISTING) != 0;
+#else
+    return rename(source, destination) == 0;
+#endif
+}
+
 static int command_new(const char *directory)
 {
     size_t length = strlen(directory);
@@ -419,7 +429,7 @@ static int format_source(const char *path, const char *source, size_t length)
         }
         fputc('\n', output);
     }
-    if (fclose(output) != 0 || rename(temporary, path) != 0) {
+    if (fclose(output) != 0 || !replace_file(temporary, path)) {
         fprintf(stderr, "Не удалось сохранить отформатированный файл «%s»\n", path);
         remove(temporary);
         free(temporary);
