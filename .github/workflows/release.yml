@@ -46,10 +46,25 @@ jobs:
         shell: msys2 {0}
         run: make clean && make
 
-      - name: Test (Windows)
+      - name: Test lexer (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: make test
+        run: make test-lexer
+
+      - name: Test parser (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: make test-parser
+
+      - name: Test compiler (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: make test-compile
+
+      - name: Test CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: make test-cli
 
       - name: Package Unix archive
         if: runner.os != 'Windows'
