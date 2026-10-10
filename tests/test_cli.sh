@@ -139,20 +139,27 @@ else
 fi
 grep -q 'Слишком много аргументов' "$tmpdir/extra.err"
 
-cat > "$tmpdir/infinite.sim" <<'SIMPL'
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+        echo "Проверка SIGINT пропущена в Windows/MSYS2."
+        ;;
+    *)
+        cat > "$tmpdir/infinite.sim" <<'SIMPL'
 пока да
     пусть значение = 1
 SIMPL
-./simpl run "$tmpdir/infinite.sim" >/dev/null 2>"$tmpdir/interrupt.err" &
-pid=$!
-sleep 1
-kill -INT "$pid"
-if wait "$pid"; then
-    echo "Ctrl+C должен прервать бесконечный цикл" >&2
-    exit 1
-else
-    test "$?" -eq 130
-fi
-grep -q 'Прервано пользователем' "$tmpdir/interrupt.err"
+        ./simpl run "$tmpdir/infinite.sim" >/dev/null 2>"$tmpdir/interrupt.err" &
+        pid=$!
+        sleep 1
+        kill -INT "$pid"
+        if wait "$pid"; then
+            echo "Ctrl+C должен прервать бесконечный цикл" >&2
+            exit 1
+        else
+            test "$?" -eq 130
+        fi
+        grep -q 'Прервано пользователем' "$tmpdir/interrupt.err"
+        ;;
+esac
 
 echo "Тесты CLI пройдены."
