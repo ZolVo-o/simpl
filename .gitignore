@@ -3,6 +3,7 @@
 /test_lexer
 /test_parser
 /test_compile
+/test_vm
 /test-input.txt
 /*.simc
 /dist/

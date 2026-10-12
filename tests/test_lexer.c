@@ -1,8 +1,8 @@
 #include "../src/lexer.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "test.h"
 
 static void test_let_example(void)
 {
@@ -97,6 +97,6 @@ int main(void)
     test_unterminated_string();
     test_indentation_tokens();
     test_invalid_dedent();
-    puts("Тесты лексера пройдены.");
+    TEST_REPORT("Лексер");
     return 0;
 }

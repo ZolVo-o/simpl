@@ -59,6 +59,11 @@ jobs:
         shell: msys2 {0}
         run: make test-compile
 
+      - name: Test VM (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: make test-vm
+
       - name: Test CLI (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}

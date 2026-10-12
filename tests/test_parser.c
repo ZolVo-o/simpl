@@ -1,8 +1,8 @@
 #include "../src/parser.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "test.h"
 
 static void test_arithmetic_precedence(void)
 {
@@ -80,6 +80,16 @@ int main(void)
     test_assignment_and_say();
     test_parse_error();
     test_nested_blocks();
-    puts("Тесты парсера пройдены.");
+    {
+        const char source[] = "";
+        Parser parser;
+        Node *program;
+        parser_init(&parser, source, 0);
+        program = parser_parse(&parser);
+        assert(program != NULL);
+        assert(program->type == NODE_PROGRAM && program->as.program.count == 0);
+        ast_free(program);
+    }
+    TEST_REPORT("Парсер");
     return 0;
 }
