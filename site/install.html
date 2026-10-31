@@ -2,11 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Как установить Simpl на Linux, macOS и Windows.">
-  <title>Установка — Simpl</title><script>try{const theme=localStorage.getItem("simpl-theme");if(theme==="dark"||theme==="light")document.documentElement.dataset.theme=theme}catch{}</script><link rel="stylesheet" href="assets/site.css"><link rel="stylesheet" href="assets/prism.css">
+  <meta name="description" content="Инструкция по установке Simpl на Linux, macOS и Windows, а также сборка из исходного кода.">
+  <meta property="og:type" content="website"><meta property="og:title" content="Установка Simpl"><meta property="og:description" content="Как установить и запустить Simpl на компьютере."><meta property="og:image" content="https://raw.githubusercontent.com/ZolVo-o/simpl/main/site/assets/og-simpl.png"><meta name="twitter:card" content="summary_large_image">
+  <title>Установка — Simpl</title><script>try{const saved=localStorage.getItem("simpl-theme");document.documentElement.dataset.theme=saved==="dark"||saved==="light"?saved:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch{}</script><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/site.css"><link rel="stylesheet" href="assets/prism.css">
 </head>
 <body>
-  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><button class="menu-toggle" aria-label="Открыть меню" aria-expanded="false">☰</button><nav class="site-nav" aria-label="Главная навигация"><a href="index.html">Главная</a><a class="active" href="install.html">Установка</a><a href="docs.html">Документация</a><a href="examples.html">Примеры</a><a href="blog.html">Блог</a></nav><button class="theme-toggle" type="button" aria-label="Включить тёмную тему" title="Включить тёмную тему">☾</button><a class="header-cta" href="https://github.com/ZolVo-o/simpl">GitHub <span>↗</span></a></header>
+  <span id="top"></span>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><button class="menu-toggle" aria-label="Открыть меню" aria-controls="site-navigation" aria-expanded="false">☰</button><nav class="site-nav" id="site-navigation" aria-label="Главная навигация"><a href="index.html">Главная</a><a class="active" aria-current="page" href="install.html">Установка</a><a href="docs.html">Документация</a><a href="examples.html">Примеры</a><a href="blog.html">Блог</a></nav><button class="theme-toggle" type="button" aria-label="Включить тёмную тему" title="Включить тёмную тему">☾</button><a class="header-cta" href="https://github.com/ZolVo-o/simpl">GitHub <span>↗</span></a></header>
   <main class="wrap page-main">
     <div class="page-heading"><p class="eyebrow">БЫСТРЫЙ СТАРТ</p><h1>Установка Simpl</h1><p>Выбери свою платформу. Для всех готовых бинарников потребуется совместимый Python runtime.</p></div>
     <div class="notice"><strong>Важно о runtime.</strong> Опубликованные Linux- и macOS-бинарники собраны с Python 3.12; Windows-архив v0.1.0 — с Python 3.14. Архивы и установщики Simpl не включают Python runtime.</div>
@@ -24,7 +26,7 @@ make test</code></pre><p>Для Windows-сборки используй окру
       </div>
     </div>
   </main>
-  <footer class="site-footer"><div class="wrap footer-inner"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><p>Небольшой язык. Большое поле для экспериментов.</p><a href="https://github.com/ZolVo-o/simpl">Исходный код на GitHub ↗</a></div></footer>
+  <footer class="site-footer"><div class="wrap footer-inner"><a class="brand" href="index.html"><span class="brand-mark">с.</span><span>Simpl</span></a><p>Небольшой язык. Большое поле для экспериментов.</p><nav class="footer-links" aria-label="Ссылки в подвале"><a href="https://github.com/ZolVo-o/simpl">GitHub</a><a href="https://github.com/ZolVo-o/simpl/blob/main/LICENSE">Лицензия MIT</a><a href="https://github.com/ZolVo-o/simpl/blob/main/CONTRIBUTING.md">Участие в разработке</a><a class="back-to-top" href="#top">Наверх ↑</a></nav><small>© 2026 Simpl · открытый учебный проект</small></div></footer>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script><script src="assets/prism-simpl.js"></script><script src="assets/site.js"></script>
 </body>
 </html>

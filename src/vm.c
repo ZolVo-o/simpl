@@ -7,9 +7,14 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 #define VM_STACK_MAX 256
-#define VM_FRAME_MAX 256
+#define VM_FRAME_MAX 16384
 #define VM_HANDLER_MAX 256
 
 static volatile sig_atomic_t vm_interrupted;
@@ -20,6 +25,23 @@ static void handle_interrupt(int signal_number)
     vm_interrupted = 1;
 }
 
+static int use_error_color(void)
+{
+    const char *no_color = getenv("NO_COLOR");
+    if (no_color != NULL && no_color[0] != '\0') return 0;
+#ifdef _WIN32
+    return _isatty(_fileno(stderr));
+#else
+    return isatty(STDERR_FILENO);
+#endif
+}
+
+static void print_error_label(void)
+{
+    if (use_error_color()) fputs("\033[1;31merror\033[0m", stderr);
+    else fputs("error", stderr);
+}
+
 int vm_was_interrupted(void)
 {
     return vm_interrupted != 0;
@@ -28,6 +50,8 @@ int vm_was_interrupted(void)
 typedef struct {
     size_t return_ip;
     size_t stack_base;
+    uint32_t function_index;
+    uint32_t call_line;
     PyObject **locals;
 } CallFrame;
 
@@ -101,27 +125,34 @@ static const char *suggest_name(const Chunk *chunk, uint32_t unknown)
 }
 
 static void report_python_error(const Chunk *chunk, size_t instruction_ip,
-                                const char *source_path)
+                                const char *source_path, const CallFrame *frames,
+                                size_t frame_count)
 {
     PyObject *type = NULL, *value = NULL, *traceback = NULL, *message = NULL;
     uint32_t line = instruction_ip < chunk->code_count ? chunk->lines[instruction_ip] : 0;
+    size_t i;
     PyErr_Fetch(&type, &value, &traceback);
     PyErr_NormalizeException(&type, &value, &traceback);
     message = value != NULL ? PyObject_Str(value) : NULL;
     if (message != NULL) {
         const char *text = PyUnicode_AsUTF8(message);
-        if (source_path != NULL)
-            fprintf(stderr, "%s:%u:1: error: %s\n", source_path, line,
-                    text != NULL ? text : "ошибка выполнения");
-        else
-            fprintf(stderr, "Ошибка в строке %u: %s\n", line,
-                    text != NULL ? text : "ошибка выполнения");
+        if (source_path != NULL) fprintf(stderr, "%s:%u:1: ", source_path, line);
+        else fprintf(stderr, "Ошибка в строке %u: ", line);
+        print_error_label();
+        fprintf(stderr, ": %s\n", text != NULL ? text : "ошибка выполнения");
     } else {
         PyErr_Clear();
-        if (source_path != NULL)
-            fprintf(stderr, "%s:%u:1: error: ошибка выполнения\n", source_path, line);
-        else
-            fprintf(stderr, "Ошибка в строке %u: ошибка выполнения\n", line);
+        if (source_path != NULL) fprintf(stderr, "%s:%u:1: ", source_path, line);
+        else fprintf(stderr, "Ошибка в строке %u: ", line);
+        print_error_label();
+        fputs(": ошибка выполнения\n", stderr);
+    }
+    for (i = frame_count; i > 0; --i) {
+        const CallFrame *frame = &frames[i - 1];
+        uint32_t frame_line = i == frame_count ? line : frames[i].call_line;
+        const ChunkFunction *function = &chunk->functions[frame->function_index];
+        fprintf(stderr, "  в функции '%s' (строка %u)\n",
+                chunk->names[function->name_index], frame_line);
     }
     Py_XDECREF(message); Py_XDECREF(type); Py_XDECREF(value); Py_XDECREF(traceback);
     PyErr_Clear();
@@ -181,6 +212,33 @@ static PyObject *builtin_type(PyObject *value)
     return PyUnicode_FromString(name);
 }
 
+static PyObject *open_text_file(PyObject *path, const char *mode)
+{
+    PyObject *open_function = PyDict_GetItemString(PyEval_GetBuiltins(), "open");
+    PyObject *mode_value = NULL, *encoding = NULL, *args = NULL, *kwargs = NULL;
+    PyObject *file = NULL;
+    if (open_function == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "не найдена функция открытия файла");
+        return NULL;
+    }
+    mode_value = PyUnicode_FromString(mode);
+    if (mode_value == NULL) goto done;
+    encoding = PyUnicode_FromString("utf-8");
+    if (encoding == NULL) goto done;
+    args = PyTuple_Pack(2, path, mode_value);
+    if (args == NULL) goto done;
+    kwargs = PyDict_New();
+    if (kwargs == NULL || PyDict_SetItemString(kwargs, "encoding", encoding) < 0)
+        goto done;
+    file = PyObject_Call(open_function, args, kwargs);
+done:
+    Py_XDECREF(mode_value);
+    Py_XDECREF(encoding);
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+    return file;
+}
+
 static PyObject *call_builtin(uint32_t builtin, PyObject *const *args,
                               uint32_t argc, int program_argc, char **program_argv)
 {
@@ -232,6 +290,296 @@ static PyObject *call_builtin(uint32_t builtin, PyObject *const *args,
             }
             return result;
         }
+    case BUILTIN_SORT:
+        if (argc == 1 && PyList_Check(args[0])) {
+            PyObject *result = PyList_GetSlice(args[0], 0, PyList_GET_SIZE(args[0]));
+            if (result == NULL) return NULL;
+            if (PyList_Sort(result) < 0) {
+                Py_DECREF(result);
+                return NULL;
+            }
+            return result;
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "сортировать ожидает список");
+        break;
+    case BUILTIN_SUM:
+        if (argc == 1 && PyList_Check(args[0])) {
+            PyObject *result = PyLong_FromLong(0);
+            Py_ssize_t i;
+            if (result == NULL) return NULL;
+            for (i = 0; i < PyList_GET_SIZE(args[0]); ++i) {
+                PyObject *value = PyList_GET_ITEM(args[0], i);
+                PyObject *next;
+                if ((!PyLong_Check(value) && !PyFloat_Check(value)) || PyBool_Check(value)) {
+                    Py_DECREF(result);
+                    PyErr_SetString(PyExc_TypeError, "сумма ожидает список чисел");
+                    return NULL;
+                }
+                next = PyNumber_Add(result, value);
+                Py_DECREF(result);
+                if (next == NULL) return NULL;
+                result = next;
+            }
+            return result;
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "сумма ожидает список чисел");
+        break;
+    case BUILTIN_MINIMUM:
+    case BUILTIN_MAXIMUM:
+        if (argc == 1 && PyList_Check(args[0])) {
+            Py_ssize_t i, length = PyList_GET_SIZE(args[0]);
+            PyObject *result;
+            int want_minimum = builtin == BUILTIN_MINIMUM;
+            if (length == 0) {
+                PyErr_SetString(PyExc_ValueError, "минимум и максимум требуют непустой список");
+                return NULL;
+            }
+            result = PyList_GET_ITEM(args[0], 0);
+            for (i = 1; i < length; ++i) {
+                PyObject *value = PyList_GET_ITEM(args[0], i);
+                int comparison = PyObject_RichCompareBool(value, result,
+                    want_minimum ? Py_LT : Py_GT);
+                if (comparison < 0) return NULL;
+                if (comparison) result = value;
+            }
+            Py_INCREF(result);
+            return result;
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "минимум и максимум ожидают список");
+        break;
+    case BUILTIN_READ_FILE:
+        if (argc == 1 && PyUnicode_Check(args[0])) {
+            PyObject *file = open_text_file(args[0], "r");
+            PyObject *result;
+            if (file == NULL) return NULL;
+            result = PyObject_CallMethod(file, "read", NULL);
+            if (result == NULL) {
+                Py_DECREF(file);
+                return NULL;
+            }
+            if (PyObject_CallMethod(file, "close", NULL) == NULL) {
+                Py_DECREF(result);
+                Py_DECREF(file);
+                return NULL;
+            }
+            Py_DECREF(file);
+            return result;
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "читать_файл ожидает путь-строку");
+        break;
+    case BUILTIN_WRITE_FILE:
+        if (argc == 2 && PyUnicode_Check(args[0]) && PyUnicode_Check(args[1])) {
+            PyObject *file = open_text_file(args[0], "w");
+            PyObject *result;
+            if (file == NULL) return NULL;
+            result = PyObject_CallMethod(file, "write", "O", args[1]);
+            if (result == NULL) {
+                Py_DECREF(file);
+                return NULL;
+            }
+            Py_DECREF(result);
+            if (PyObject_CallMethod(file, "close", NULL) == NULL) {
+                Py_DECREF(file);
+                return NULL;
+            }
+            Py_DECREF(file);
+            Py_RETURN_NONE;
+        }
+        if (argc == 2) PyErr_SetString(PyExc_TypeError,
+                                       "записать_файл ожидает путь и содержимое-строки");
+        break;
+    case BUILTIN_TIME:
+        if (argc == 0) {
+            PyObject *module = PyImport_ImportModule("time");
+            PyObject *result;
+            if (module == NULL) return NULL;
+            result = PyObject_CallMethod(module, "time", NULL);
+            Py_DECREF(module);
+            return result;
+        }
+        break;
+    case BUILTIN_SLEEP:
+        if (argc == 1 && PyLong_Check(args[0]) && !PyBool_Check(args[0])) {
+            long long milliseconds = PyLong_AsLongLong(args[0]);
+            PyObject *module, *result;
+            if (milliseconds == -1 && PyErr_Occurred()) return NULL;
+            if (milliseconds < 0) {
+                PyErr_SetString(PyExc_ValueError, "пауза ожидает неотрицательное число миллисекунд");
+                return NULL;
+            }
+            module = PyImport_ImportModule("time");
+            if (module == NULL) return NULL;
+            result = PyObject_CallMethod(module, "sleep", "d",
+                                         (double)milliseconds / 1000.0);
+            Py_DECREF(module);
+            if (result == NULL) return NULL;
+            Py_DECREF(result);
+            Py_RETURN_NONE;
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError,
+                                       "пауза ожидает целое число миллисекунд");
+        break;
+    case BUILTIN_NUMBER:
+        if (argc == 1) {
+            if ((PyLong_Check(args[0]) && !PyBool_Check(args[0]))
+                || PyFloat_Check(args[0])) {
+                Py_INCREF(args[0]);
+                return args[0];
+            }
+            if (PyUnicode_Check(args[0])) {
+                PyObject *result = PyLong_FromUnicodeObject(args[0], 10);
+                if (result != NULL) return result;
+                if (!PyErr_ExceptionMatches(PyExc_ValueError)) return NULL;
+                PyErr_Clear();
+                return PyFloat_FromString(args[0]);
+            }
+            PyErr_SetString(PyExc_TypeError,
+                            "число ожидает число или строку с числом");
+            return NULL;
+        }
+        break;
+    case BUILTIN_STRING:
+        if (argc == 1) return PyObject_Str(args[0]);
+        break;
+    case BUILTIN_RANDOM:
+        if (argc == 2 && PyLong_Check(args[0]) && PyLong_Check(args[1])
+            && !PyBool_Check(args[0]) && !PyBool_Check(args[1])) {
+            PyObject *module = PyImport_ImportModule("random");
+            PyObject *result;
+            if (module == NULL) return NULL;
+            result = PyObject_CallMethod(module, "randint", "OO", args[0], args[1]);
+            Py_DECREF(module);
+            return result;
+        }
+        if (argc == 2) PyErr_SetString(PyExc_TypeError,
+                                       "случайное ожидает две целые границы");
+        break;
+    case BUILTIN_APPEND:
+        if (argc == 2 && PyList_Check(args[0])) {
+            if (PyList_Append(args[0], args[1]) < 0) return NULL;
+            Py_RETURN_NONE;
+        }
+        if (argc == 2) PyErr_SetString(PyExc_TypeError,
+                                       "добавить ожидает список и значение");
+        break;
+    case BUILTIN_REMOVE:
+        if (argc == 2 && PyList_Check(args[0]) && PyLong_Check(args[1])
+            && !PyBool_Check(args[1])) {
+            Py_ssize_t index = PyLong_AsSsize_t(args[1]);
+            PyObject *removed;
+            if (index == -1 && PyErr_Occurred()) return NULL;
+            removed = PySequence_GetItem(args[0], index);
+            if (removed == NULL) return NULL;
+            if (PySequence_DelItem(args[0], index) < 0) {
+                Py_DECREF(removed);
+                return NULL;
+            }
+            return removed;
+        }
+        if (argc == 2) PyErr_SetString(PyExc_TypeError,
+                                       "удалить ожидает список и целый индекс");
+        break;
+    case BUILTIN_CONTAINS:
+        if (argc == 2) {
+            int found = PySequence_Contains(args[0], args[1]);
+            return found < 0 ? NULL : PyBool_FromLong(found);
+        }
+        break;
+    case BUILTIN_FIND:
+        if (argc == 2 && PyUnicode_Check(args[0]) && PyUnicode_Check(args[1])) {
+            Py_ssize_t found = PyUnicode_Find(args[0], args[1], 0,
+                                              PyUnicode_GetLength(args[0]), 1);
+            return found < 0 && PyErr_Occurred() ? NULL : PyLong_FromSsize_t(found);
+        }
+        if (argc == 2 && PyList_Check(args[0])) {
+            Py_ssize_t i;
+            for (i = 0; i < PyList_GET_SIZE(args[0]); ++i) {
+                int equal = PyObject_RichCompareBool(PyList_GET_ITEM(args[0], i),
+                                                     args[1], Py_EQ);
+                if (equal < 0) return NULL;
+                if (equal) return PyLong_FromSsize_t(i);
+            }
+            return PyLong_FromLong(-1);
+        }
+        if (argc == 2) PyErr_SetString(PyExc_TypeError,
+                                       "найти ожидает строку и подстроку либо список и значение");
+        break;
+    case BUILTIN_REPLACE:
+        if (argc == 3 && PyUnicode_Check(args[0]) && PyUnicode_Check(args[1])
+            && PyUnicode_Check(args[2]))
+            return PyUnicode_Replace(args[0], args[1], args[2], -1);
+        if (argc == 3) PyErr_SetString(PyExc_TypeError,
+                                       "заменить ожидает строку, искомое и замену");
+        break;
+    case BUILTIN_ABS:
+        if (argc == 1 && (PyLong_Check(args[0]) || PyFloat_Check(args[0]))
+            && !PyBool_Check(args[0]))
+            return PyNumber_Absolute(args[0]);
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "модуль ожидает целое или вещественное число");
+        break;
+    case BUILTIN_ROUND:
+        if (argc == 1 && (PyLong_Check(args[0]) || PyFloat_Check(args[0]))
+            && !PyBool_Check(args[0])) {
+            PyObject *round_function = PyDict_GetItemString(PyEval_GetBuiltins(), "round");
+            if (round_function == NULL) {
+                PyErr_SetString(PyExc_RuntimeError, "не найдена функция округления");
+                return NULL;
+            }
+            return PyObject_CallFunctionObjArgs(round_function, args[0], NULL);
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "круг ожидает целое или вещественное число");
+        break;
+    case BUILTIN_CHAR:
+        if (argc == 1 && PyLong_Check(args[0]) && !PyBool_Check(args[0])) {
+            long code = PyLong_AsLong(args[0]);
+            if (code == -1 && PyErr_Occurred()) return NULL;
+            if (code < 0 || code > 127) {
+                PyErr_SetString(PyExc_ValueError, "символ ожидает код ASCII от 0 до 127");
+                return NULL;
+            }
+            return PyUnicode_FromOrdinal((int)code);
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "символ ожидает целый код ASCII");
+        break;
+    case BUILTIN_CODE:
+        if (argc == 1 && PyUnicode_Check(args[0])) {
+            Py_UCS4 code;
+            if (PyUnicode_GetLength(args[0]) != 1) {
+                PyErr_SetString(PyExc_ValueError, "код ожидает один символ ASCII");
+                return NULL;
+            }
+            code = PyUnicode_ReadChar(args[0], 0);
+            if (code > 127) {
+                PyErr_SetString(PyExc_ValueError, "код ожидает один символ ASCII");
+                return NULL;
+            }
+            return PyLong_FromUnsignedLong(code);
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "код ожидает строку из одного символа ASCII");
+        break;
+    case BUILTIN_SHUFFLE:
+        if (argc == 1 && PyList_Check(args[0])) {
+            PyObject *module = PyImport_ImportModule("random");
+            PyObject *result;
+            if (module == NULL) return NULL;
+            result = PyObject_CallMethod(module, "shuffle", "O", args[0]);
+            Py_DECREF(module);
+            return result;
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "перемешать ожидает список");
+        break;
+    case BUILTIN_EXIT:
+        if (argc == 1 && PyLong_Check(args[0]) && !PyBool_Check(args[0])) {
+            long code = PyLong_AsLong(args[0]);
+            if (code == -1 && PyErr_Occurred()) return NULL;
+            if (code < 0 || code > 255) {
+                PyErr_SetString(PyExc_ValueError, "выход ожидает код от 0 до 255");
+                return NULL;
+            }
+            Py_Exit((int)code);
+        }
+        if (argc == 1) PyErr_SetString(PyExc_TypeError, "выход ожидает целый код завершения");
+        break;
     default:
         PyErr_SetString(PyExc_RuntimeError, "неизвестная встроенная функция");
         return NULL;
@@ -306,11 +654,12 @@ dispatch:
                 if (value == NULL || stack_count == VM_STACK_MAX) {
                     const char *suggestion = suggest_name(chunk, index);
                     if (source_path != NULL)
-                        fprintf(stderr, "%s:%u:1: error: неизвестная переменная '%s'.",
-                                source_path, chunk->lines[instruction_ip], chunk->names[index]);
-                    else
-                        fprintf(stderr, "Ошибка в строке %u: неизвестная переменная '%s'.",
-                                chunk->lines[instruction_ip], chunk->names[index]);
+                        fprintf(stderr, "%s:%u:1: ", source_path,
+                                chunk->lines[instruction_ip]);
+                    else fprintf(stderr, "Ошибка в строке %u: ",
+                                 chunk->lines[instruction_ip]);
+                    print_error_label();
+                    fprintf(stderr, ": неизвестная переменная '%s'.", chunk->names[index]);
                     if (suggestion != NULL)
                         fprintf(stderr, " Возможно, ты имел в виду '%s'?", suggestion);
                     fputc('\n', stderr);
@@ -479,6 +828,8 @@ dispatch:
                                    sizeof(*frame->locals));
             if (frame->locals == NULL) goto done;
             frame->return_ip = ip;
+            frame->function_index = function_index;
+            frame->call_line = chunk->lines[instruction_ip];
             base = stack_count - argc;
             frame->stack_base = base;
             for (arg = 0; arg < argc; ++arg) {
@@ -716,7 +1067,7 @@ python_error:
         ip = handler.target_ip;
         goto dispatch;
     }
-    report_python_error(chunk, instruction_ip, source_path);
+    report_python_error(chunk, instruction_ip, source_path, frames, frame_count);
     goto done;
 
 done:

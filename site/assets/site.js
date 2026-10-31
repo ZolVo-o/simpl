@@ -10,7 +10,7 @@
   })();
   const initialTheme = storedTheme === "dark" || storedTheme === "light"
     ? storedTheme
-    : "light";
+    : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
   root.dataset.theme = initialTheme;
 
@@ -43,6 +43,19 @@
       const isOpen = toggle.getAttribute("aria-expanded") === "true";
       toggle.setAttribute("aria-expanded", String(!isOpen));
       nav.classList.toggle("is-open", !isOpen);
+    });
+    nav.addEventListener("click", event => {
+      if (event.target.closest("a")) {
+        toggle.setAttribute("aria-expanded", "false");
+        nav.classList.remove("is-open");
+      }
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+        toggle.setAttribute("aria-expanded", "false");
+        nav.classList.remove("is-open");
+        toggle.focus();
+      }
     });
   }
 })();

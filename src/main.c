@@ -15,11 +15,28 @@
 #include <signal.h>
 #include <sys/stat.h>
 #ifdef _WIN32
+#include <io.h>
 #include <direct.h>
 #define TokenType Win32TokenType
 #include <windows.h>
 #undef TokenType
+#else
+#include <unistd.h>
 #endif
+
+static void print_error_label(void)
+{
+    const char *no_color = getenv("NO_COLOR");
+    int color;
+#ifdef _WIN32
+    color = _isatty(_fileno(stderr));
+#else
+    color = isatty(STDERR_FILENO);
+#endif
+    if (no_color != NULL && no_color[0] != '\0') color = 0;
+    if (color) fputs("\033[1;31merror\033[0m", stderr);
+    else fputs("error", stderr);
+}
 
 static char *read_file(const char *path, size_t *length)
 {
@@ -73,6 +90,7 @@ static int compile_source_text(const char *path, const char *source, size_t leng
     Parser parser;
     Node *program;
     int success;
+    uint32_t compile_error_line;
     parser_init(&parser, source, length);
     program = parser_parse(&parser);
     if (program == NULL) {
@@ -80,15 +98,19 @@ static int compile_source_text(const char *path, const char *source, size_t leng
         size_t offset = parser.current.start >= source
             && parser.current.start <= source + length
             ? (size_t)(parser.current.start - source) : length;
-        fprintf(stderr, "%s:%lu:%lu: error: %s\n", path,
+        fprintf(stderr, "%s:%lu:%lu: ", path,
                 (unsigned long)line,
-                (unsigned long)source_column(source, length, offset, line),
-                parser.error != NULL ? parser.error : "ошибка разбора");
+                (unsigned long)source_column(source, length, offset, line));
+        print_error_label();
+        fprintf(stderr, ": %s\n", parser.error != NULL ? parser.error : "ошибка разбора");
         return 2;
     }
-    success = compiler_compile(program, chunk);
-    if (!success)
-        fprintf(stderr, "%s:1:1: error: не удалось скомпилировать программу\n", path);
+    success = compiler_compile_with_error_line(program, chunk, &compile_error_line);
+    if (!success) {
+        fprintf(stderr, "%s:%u:1: ", path, compile_error_line);
+        print_error_label();
+        fputs(": не удалось скомпилировать программу\n", stderr);
+    }
     ast_free(program);
     return success ? 0 : 2;
 }

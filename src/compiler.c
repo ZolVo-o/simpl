@@ -25,7 +25,11 @@ static int find_function(const Chunk *chunk, const char *name, uint32_t *index)
 static int find_builtin(const char *name, uint32_t *index)
 {
     static const char *const names[] = {
-        "длина", "тип", "верх", "низ", "разделить", "соединить", "аргументы"
+        "длина", "тип", "верх", "низ", "разделить", "соединить", "аргументы",
+        "сортировать", "сумма", "минимум", "максимум", "читать_файл",
+        "записать_файл", "время", "пауза", "число", "строка", "случайное",
+        "добавить", "удалить", "содержит", "найти", "заменить", "модуль", "круг",
+        "символ", "код", "перемешать", "выход"
     };
     size_t i;
     if (strcmp(name, "arguments") == 0) {
@@ -396,9 +400,11 @@ static int compile_node(const Node *node, Chunk *chunk)
     return 0;
 }
 
-int compiler_compile(const Node *program, Chunk *chunk)
+int compiler_compile_with_error_line(const Node *program, Chunk *chunk,
+                                    uint32_t *error_line)
 {
     size_t i;
+    if (error_line != NULL) *error_line = 0;
     chunk_init_empty(chunk);
     if (program->type != NODE_PROGRAM) return 0;
 
@@ -452,6 +458,12 @@ int compiler_compile(const Node *program, Chunk *chunk)
     return 1;
 
 fail:
-        chunk_free(chunk);
-        return 0;
+    if (error_line != NULL) *error_line = chunk->current_line;
+    chunk_free(chunk);
+    return 0;
+}
+
+int compiler_compile(const Node *program, Chunk *chunk)
+{
+    return compiler_compile_with_error_line(program, chunk, NULL);
 }

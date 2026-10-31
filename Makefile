@@ -7,11 +7,16 @@ LEXER_TEST_SRC = tests/test_lexer.c src/lexer.c
 PARSER_TEST_SRC = tests/test_parser.c src/parser.c src/lexer.c
 E2E_TEST_SRC = tests/test_compile.c src/lexer.c src/parser.c src/compiler.c src/chunk.c src/vm.c src/serialize.c src/disasm.c
 
-.PHONY: all clean test test-lexer test-parser test-vm test-compile test-cli smoke
+SML_TEST_TARGET =
+ifneq ($(wildcard tests/test_sml_lexer.c src/sml_lexer.c src/sml_lexer.h),)
+SML_TEST_TARGET = test-sml-lexer
+endif
+
+.PHONY: all clean test test-lexer test-sml-lexer test-parser test-vm test-compile test-cli smoke
 
 all: simpl
 
-test: test-lexer test-parser test-vm test-compile test-cli smoke
+test: test-lexer $(SML_TEST_TARGET) test-parser test-vm test-compile test-cli smoke
 
 simpl: $(SRC) src/opcodes.h src/chunk.h src/vm.h src/serialize.h src/disasm.h src/lexer.h src/parser.h src/ast.h src/compiler.h
 	$(CC) $(CFLAGS) -o $@ $(SRC) $(LDFLAGS)
@@ -19,6 +24,10 @@ simpl: $(SRC) src/opcodes.h src/chunk.h src/vm.h src/serialize.h src/disasm.h sr
 test-lexer: $(LEXER_TEST_SRC) src/lexer.h tests/test.h
 	$(CC) $(CFLAGS) -UNDEBUG -o test_lexer $(LEXER_TEST_SRC)
 	./test_lexer
+
+test-sml-lexer: tests/test_sml_lexer.c src/sml_lexer.c src/sml_lexer.h
+	$(CC) $(CFLAGS) -UNDEBUG -o test_sml_lexer tests/test_sml_lexer.c src/sml_lexer.c
+	./test_sml_lexer
 
 test-parser: $(PARSER_TEST_SRC) src/parser.h src/ast.h tests/test.h
 	$(CC) $(CFLAGS) -UNDEBUG -o test_parser $(PARSER_TEST_SRC)
@@ -39,4 +48,4 @@ smoke: simpl
 	bash tests/smoke.sh
 
 clean:
-	rm -f simpl test_lexer test_parser test_vm test_compile *.simc
+	rm -f simpl test_lexer test_sml_lexer test_parser test_vm test_compile *.simc
