@@ -2,7 +2,8 @@
 set -eu
 
 tmpdir=$(mktemp -d)
-trap 'rm -rf "$tmpdir"' EXIT HUP INT TERM
+file_path=".simpl-test-file-$$.txt"
+trap 'rm -rf "$tmpdir" "$file_path"' EXIT HUP INT TERM
 
 cat > "$tmpdir/hello.sim" <<'SIMPL'
 пусть значение = 6
@@ -227,16 +228,16 @@ cat > "$tmpdir/files.sim" <<'SIMPL'
 сказать записать_файл("$FILE_PATH", "Привет, мир!")
 сказать читать_файл("$FILE_PATH")
 SIMPL
-sed "s|\$FILE_PATH|$tmpdir/data.txt|g" "$tmpdir/files.sim" > "$tmpdir/files-ready.sim"
-printf 'старое содержимое' > "$tmpdir/data.txt"
+sed "s|\$FILE_PATH|$file_path|g" "$tmpdir/files.sim" > "$tmpdir/files-ready.sim"
+printf 'старое содержимое' > "$file_path"
 output=$(./simpl run "$tmpdir/files-ready.sim")
 test "$output" = "$(printf 'None\nПривет, мир!')"
-test "$(cat "$tmpdir/data.txt")" = "Привет, мир!"
+test "$(cat "$file_path")" = "Привет, мир!"
 ./simpl compile "$tmpdir/files-ready.sim" >/dev/null
 compiled_output=$(./simpl run "$tmpdir/files-ready.simc")
 test "$compiled_output" = "$output"
 
-printf 'сказать читать_файл("%s/missing.txt")\n' "$tmpdir" > "$tmpdir/file-error.sim"
+printf 'сказать читать_файл("%s.missing")\n' "$file_path" > "$tmpdir/file-error.sim"
 if output=$(./simpl run "$tmpdir/file-error.sim" 2>&1); then
     echo "Чтение отсутствующего файла должно завершиться ошибкой" >&2
     exit 1
