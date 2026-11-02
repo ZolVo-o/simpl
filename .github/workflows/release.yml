@@ -44,27 +44,7 @@ jobs:
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}
-        run: make clean && make
-
-      - name: Test lexer (Windows)
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: make test-lexer
-
-      - name: Test parser (Windows)
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: make test-parser
-
-      - name: Test compiler (Windows)
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: make test-compile
-
-      - name: Test CLI (Windows)
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: make test-cli
+        run: make clean && make test
 
       - name: Package Unix archive
         if: runner.os != 'Windows'
@@ -124,14 +104,17 @@ jobs:
 
       - name: Install vsce and package extension
         run: |
+          version="$(cat VERSION)"
+          test "v$version" = "$GITHUB_REF_NAME"
           npm install --global @vscode/vsce
           cd editors/vscode
-          vsce package --out "$RUNNER_TEMP/simpl-0.1.0.vsix"
+          test "$(node -p "require('./package.json').version")" = "$version"
+          vsce package --out "$RUNNER_TEMP/simpl-${version}.vsix"
 
       - uses: actions/upload-artifact@v4
         with:
           name: release-vscode-extension
-          path: ${{ runner.temp }}/simpl-0.1.0.vsix
+          path: ${{ runner.temp }}/simpl-*.vsix
           if-no-files-found: error
 
   publish:

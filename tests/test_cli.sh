@@ -134,8 +134,8 @@ case "$output" in
     *) echo "Строки/стек вызовов не сохранены в байткоде: $output" >&2; exit 1 ;;
 esac
 
-test "$(./simpl --version)" = "Simpl 0.1.0"
-test "$(./simpl -v)" = "Simpl 0.1.0"
+test "$(./simpl --version)" = "Simpl $(cat VERSION)"
+test "$(./simpl -v)" = "Simpl $(cat VERSION)"
 ./simpl --help | grep -q 'repl'
 ./simpl -h | grep -q 'compile'
 if output=$(./simpl 2>&1); then
@@ -244,7 +244,7 @@ else
     test "$?" -eq 3
 fi
 case "$output" in
-    *"No such file or directory"*) ;;
+    *"file-error.sim:1:1: error:"*) ;;
     *) echo "Неверная ошибка чтения файла: $output" >&2; exit 1 ;;
 esac
 

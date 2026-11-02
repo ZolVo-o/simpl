@@ -24,6 +24,10 @@
 #include <unistd.h>
 #endif
 
+#ifndef SIMPL_VERSION
+#define SIMPL_VERSION "dev"
+#endif
+
 static void print_error_label(void)
 {
     const char *no_color = getenv("NO_COLOR");
@@ -564,7 +568,7 @@ int main(int argc, char **argv)
         return 0;
     }
     if (argc == 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
-        puts("Simpl 0.1.0");
+        printf("Simpl %s\n", SIMPL_VERSION);
         return 0;
     }
     command = argv[1];

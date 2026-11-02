@@ -4,7 +4,7 @@ set -euo pipefail
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
 
-[[ "$(./simpl --version)" == "Simpl 0.1.0" ]]
+[[ "$(./simpl --version)" == "Simpl $(cat VERSION)" ]]
 
 cat > "$tmpdir/arithmetic.sim" <<'SIMPL'
 сказать 6 * 7

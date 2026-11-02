@@ -2,7 +2,7 @@
   "name": "simpl",
   "displayName": "Simpl",
   "description": "Подсветка и инструменты разработки для языка Simpl",
-  "version": "0.2.1",
+  "version": "0.2.0",
   "icon": "./icons/simpl-extension.png",
   "repository": {
     "type": "git",

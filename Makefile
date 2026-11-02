@@ -1,6 +1,9 @@
 CC      = gcc
 CFLAGS  = -std=c99 -Wall -Wextra -Wpedantic -O2 $(shell python3-config --cflags)
 LDFLAGS = $(shell python3-config --embed --ldflags)
+VERSION = $(shell cat VERSION)
+
+CFLAGS += -DSIMPL_VERSION=\"$(VERSION)\"
 
 SRC = src/main.c src/lexer.c src/parser.c src/compiler.c src/chunk.c src/vm.c src/serialize.c src/disasm.c
 LEXER_TEST_SRC = tests/test_lexer.c src/lexer.c
@@ -18,7 +21,7 @@ all: simpl
 
 test: test-lexer $(SML_TEST_TARGET) test-parser test-vm test-compile test-cli smoke
 
-simpl: $(SRC) src/opcodes.h src/chunk.h src/vm.h src/serialize.h src/disasm.h src/lexer.h src/parser.h src/ast.h src/compiler.h
+simpl: $(SRC) VERSION src/opcodes.h src/chunk.h src/vm.h src/serialize.h src/disasm.h src/lexer.h src/parser.h src/ast.h src/compiler.h
 	$(CC) $(CFLAGS) -o $@ $(SRC) $(LDFLAGS)
 
 test-lexer: $(LEXER_TEST_SRC) src/lexer.h tests/test.h
