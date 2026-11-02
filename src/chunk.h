@@ -36,6 +36,7 @@ int chunk_add_function(Chunk *chunk, uint32_t name_index,
                        uint32_t *function_index);
 int chunk_emit(Chunk *chunk, uint8_t byte);
 int chunk_emit_u32(Chunk *chunk, uint32_t value);
+int chunk_verify(const Chunk *chunk);
 void chunk_free(Chunk *chunk);
 
 #endif

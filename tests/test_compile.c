@@ -1,5 +1,6 @@
 #include "../src/compiler.h"
 #include "../src/disasm.h"
+#include "../src/opcodes.h"
 #include "../src/parser.h"
 #include "../src/serialize.h"
 #include "../src/vm.h"
@@ -8,6 +9,55 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+
+static size_t operand_size(uint8_t opcode)
+{
+    switch (opcode) {
+    case OP_CONST:
+    case OP_LOAD:
+    case OP_STORE:
+    case OP_MAKE_LIST:
+    case OP_MAKE_DICT:
+    case OP_JUMP:
+    case OP_JUMP_IF_FALSE:
+    case OP_ITER_NEXT:
+    case OP_TRY_BEGIN:
+        return 4;
+    case OP_CALL:
+    case OP_CALL_BUILTIN:
+        return 8;
+    default:
+        return 0;
+    }
+}
+
+static size_t find_opcode(const Chunk *chunk, uint8_t wanted)
+{
+    size_t offset = 0;
+    while (offset < chunk->code_count) {
+        size_t instruction = offset;
+        uint8_t opcode = chunk->code[offset++];
+        if (opcode == wanted) return instruction;
+        offset += operand_size(opcode);
+    }
+    return SIZE_MAX;
+}
+
+static void write_u32(uint8_t *bytes, uint32_t value)
+{
+    bytes[0] = (uint8_t)value;
+    bytes[1] = (uint8_t)(value >> 8);
+    bytes[2] = (uint8_t)(value >> 16);
+    bytes[3] = (uint8_t)(value >> 24);
+}
+
+static void assert_load_rejected(Chunk *candidate, Chunk *target, size_t expected_code_count)
+{
+    assert(serialize_save(candidate, "test.simc"));
+    assert(!serialize_load(target, "test.simc"));
+    assert(target->code_count == expected_code_count);
+    assert(chunk_verify(target));
+}
 
 int main(void)
 {
@@ -61,6 +111,11 @@ int main(void)
             "    вернуть x * 2\n"
             "пусть данные = [20, 22]\n"
             "сказать удвоить(данные[0] + данные[1])\n"
+            "сказать длина(данные)\n"
+            "если да\n"
+            "    сказать \"да\"\n"
+            "иначе\n"
+            "    сказать \"нет\"\n"
             "сказать 1.5\n"
             "сказать да\n"
             "сказать \"текст\"\n";
@@ -91,14 +146,63 @@ int main(void)
         assert(memcmp(loaded.code, original.code, original.code_count) == 0);
         assert(memcmp(loaded.lines, original.lines,
                       original.code_count * sizeof(*original.lines)) == 0);
+        assert(chunk_verify(&loaded));
         assert(vm_run(&loaded));
+        loaded.code[0] = 255;
+        assert(!chunk_verify(&loaded));
+        loaded.code[0] = original.code[0];
         {
-            FILE *file = fopen("test.simc", "r+b");
-            assert(file != NULL);
-            assert(fputc('X', file) != EOF);
-            assert(fclose(file) == 0);
-            assert(!serialize_load(&loaded, "test.simc"));
-            assert(loaded.code_count == original.code_count);
+            size_t instruction;
+
+            original.code[0] = 255;
+            assert_load_rejected(&original, &loaded, original.code_count);
+            original.code[0] = loaded.code[0];
+
+            instruction = find_opcode(&original, OP_CONST);
+            assert(instruction != SIZE_MAX);
+            write_u32(original.code + instruction + 1, UINT32_MAX);
+            assert_load_rejected(&original, &loaded, original.code_count);
+            memcpy(original.code + instruction + 1, loaded.code + instruction + 1, 4);
+
+            instruction = find_opcode(&original, OP_LOAD);
+            assert(instruction != SIZE_MAX);
+            write_u32(original.code + instruction + 1, UINT32_MAX);
+            assert_load_rejected(&original, &loaded, original.code_count);
+            memcpy(original.code + instruction + 1, loaded.code + instruction + 1, 4);
+
+            instruction = find_opcode(&original, OP_CALL);
+            assert(instruction != SIZE_MAX);
+            write_u32(original.code + instruction + 1, UINT32_MAX);
+            assert_load_rejected(&original, &loaded, original.code_count);
+            memcpy(original.code + instruction + 1, loaded.code + instruction + 1, 4);
+
+            instruction = find_opcode(&original, OP_CALL_BUILTIN);
+            assert(instruction != SIZE_MAX);
+            write_u32(original.code + instruction + 1, UINT32_MAX);
+            assert_load_rejected(&original, &loaded, original.code_count);
+            memcpy(original.code + instruction + 1, loaded.code + instruction + 1, 4);
+
+            instruction = find_opcode(&original, OP_JUMP);
+            assert(instruction != SIZE_MAX);
+            write_u32(original.code + instruction + 1, UINT32_MAX);
+            assert_load_rejected(&original, &loaded, original.code_count);
+            write_u32(original.code + instruction + 1, 0x7fffffffu);
+            assert_load_rejected(&original, &loaded, original.code_count);
+            memcpy(original.code + instruction + 1, loaded.code + instruction + 1, 4);
+
+            original.functions[0].address = 1;
+            assert_load_rejected(&original, &loaded, original.code_count);
+            original.functions[0].address = loaded.functions[0].address;
+
+            instruction = find_opcode(&original, OP_HALT);
+            assert(instruction != SIZE_MAX);
+            original.code[instruction] = OP_POP;
+            assert_load_rejected(&original, &loaded, original.code_count);
+            original.code[instruction] = OP_HALT;
+
+            original.code[original.code_count - 1] = OP_CONST;
+            assert_load_rejected(&original, &loaded, original.code_count);
+            original.code[original.code_count - 1] = loaded.code[original.code_count - 1];
         }
         chunk_free(&loaded);
         chunk_free(&original);

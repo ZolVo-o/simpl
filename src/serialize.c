@@ -302,7 +302,7 @@ int serialize_load(Chunk *chunk, const char *path)
         free(parameters);
         loaded.functions[function_index].address = address;
     }
-    if (reader.remaining != 0) goto done;
+    if (reader.remaining != 0 || !chunk_verify(&loaded)) goto done;
     ok = 1;
 done:
     if (fclose(file) != 0) ok = 0;

@@ -1,5 +1,7 @@
 #include "chunk.h"
 
+#include "opcodes.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -134,6 +136,133 @@ int chunk_init(Chunk *chunk, PyObject *const *constants, size_t constant_count,
         }
     }
     return 1;
+}
+
+static int read_u32(const Chunk *chunk, size_t *offset, uint32_t *value)
+{
+    if (chunk->code_count - *offset < 4) return 0;
+    *value = (uint32_t)chunk->code[*offset]
+        | ((uint32_t)chunk->code[*offset + 1] << 8)
+        | ((uint32_t)chunk->code[*offset + 2] << 16)
+        | ((uint32_t)chunk->code[*offset + 3] << 24);
+    *offset += 4;
+    return 1;
+}
+
+static int jump_target(const Chunk *chunk, size_t offset, uint32_t raw,
+                       size_t *target)
+{
+    int32_t delta = (int32_t)raw;
+    if ((delta < 0 && (size_t)(-(int64_t)delta) > offset)
+        || (delta > 0 && (size_t)delta > chunk->code_count - offset)) return 0;
+    *target = (size_t)((int64_t)offset + delta);
+    return *target < chunk->code_count;
+}
+
+int chunk_verify(const Chunk *chunk)
+{
+    unsigned char *starts;
+    size_t offset = 0;
+    size_t i;
+    int has_halt = 0;
+
+    if (chunk == NULL || chunk->code_count == 0 || chunk->code == NULL || chunk->lines == NULL
+        || (chunk->constant_count != 0 && chunk->constants == NULL)
+        || (chunk->name_count != 0 && chunk->names == NULL)
+        || (chunk->function_count != 0 && chunk->functions == NULL)) return 0;
+    for (i = 0; i < chunk->constant_count; ++i)
+        if (chunk->constants[i] == NULL) return 0;
+    for (i = 0; i < chunk->name_count; ++i)
+        if (chunk->names[i] == NULL) return 0;
+    starts = calloc(chunk->code_count, sizeof(*starts));
+    if (starts == NULL) return 0;
+    while (offset < chunk->code_count) {
+        uint8_t opcode;
+        uint32_t first, second;
+        starts[offset] = 1;
+        opcode = chunk->code[offset++];
+        if (opcode > OP_TRY_END) goto fail;
+        switch (opcode) {
+        case OP_CONST:
+            if (!read_u32(chunk, &offset, &first) || first >= chunk->constant_count) goto fail;
+            break;
+        case OP_LOAD:
+        case OP_STORE:
+            if (!read_u32(chunk, &offset, &first) || first >= chunk->name_count) goto fail;
+            break;
+        case OP_CALL:
+            if (!read_u32(chunk, &offset, &first) || !read_u32(chunk, &offset, &second)
+                || first >= chunk->function_count
+                || second != chunk->functions[first].parameter_count) goto fail;
+            break;
+        case OP_CALL_BUILTIN:
+            if (!read_u32(chunk, &offset, &first) || !read_u32(chunk, &offset, &second)
+                || first > BUILTIN_EXIT) goto fail;
+            break;
+        case OP_MAKE_LIST:
+        case OP_MAKE_DICT:
+            if (!read_u32(chunk, &offset, &first)) goto fail;
+            break;
+        case OP_JUMP:
+        case OP_JUMP_IF_FALSE:
+        case OP_ITER_NEXT:
+        case OP_TRY_BEGIN:
+            if (!read_u32(chunk, &offset, &first)) goto fail;
+            break;
+        case OP_HALT:
+            has_halt = 1;
+            break;
+        default:
+            break;
+        }
+    }
+    if (!has_halt) goto fail;
+    for (i = 0; i < chunk->function_count; ++i) {
+        if (chunk->functions[i].name_index >= chunk->name_count
+            || chunk->functions[i].address >= chunk->code_count
+            || !starts[chunk->functions[i].address]
+            || (chunk->functions[i].parameter_count != 0
+                && chunk->functions[i].parameters == NULL)) goto fail;
+        {
+            size_t parameter;
+            for (parameter = 0; parameter < chunk->functions[i].parameter_count; ++parameter)
+                if (chunk->functions[i].parameters[parameter] >= chunk->name_count) goto fail;
+        }
+    }
+    offset = 0;
+    while (offset < chunk->code_count) {
+        uint8_t opcode = chunk->code[offset++];
+        uint32_t operand;
+        size_t target;
+        switch (opcode) {
+        case OP_JUMP:
+        case OP_JUMP_IF_FALSE:
+        case OP_ITER_NEXT:
+        case OP_TRY_BEGIN:
+            if (!read_u32(chunk, &offset, &operand)
+                || !jump_target(chunk, offset, operand, &target) || !starts[target]) goto fail;
+            break;
+        case OP_CONST:
+        case OP_LOAD:
+        case OP_STORE:
+        case OP_MAKE_LIST:
+        case OP_MAKE_DICT:
+            offset += 4;
+            break;
+        case OP_CALL:
+        case OP_CALL_BUILTIN:
+            offset += 8;
+            break;
+        default:
+            break;
+        }
+    }
+    free(starts);
+    return 1;
+
+fail:
+    free(starts);
+    return 0;
 }
 
 void chunk_free(Chunk *chunk)
