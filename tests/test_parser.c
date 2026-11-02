@@ -40,6 +40,21 @@ static void test_assignment_and_say(void)
     ast_free(program);
 }
 
+static void test_none_literal(void)
+{
+    const char source[] = "пусть результат = ничего\n";
+    Parser parser;
+    Node *program;
+    Node *value;
+
+    parser_init(&parser, source, strlen(source));
+    program = parser_parse(&parser);
+    assert(program != NULL);
+    value = program->as.program.items[0]->as.declaration.value;
+    assert(value->type == NODE_NONE);
+    ast_free(program);
+}
+
 static void test_parse_error(void)
 {
     const char source[] = "пусть = 2";
@@ -78,6 +93,7 @@ int main(void)
 {
     test_arithmetic_precedence();
     test_assignment_and_say();
+    test_none_literal();
     test_parse_error();
     test_nested_blocks();
     {

@@ -384,6 +384,9 @@ static int compile_node(const Node *node, Chunk *chunk)
         Py_DECREF(value);
         return emit_index(chunk, OP_CONST, index);
     }
+    case NODE_NONE:
+        return chunk_add_constant(chunk, Py_None, &index)
+            && emit_index(chunk, OP_CONST, index);
     case NODE_VAR:
         return chunk_intern_name(chunk, node->as.variable.name, &index)
             && emit_index(chunk, OP_LOAD, index);

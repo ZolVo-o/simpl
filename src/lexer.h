@@ -49,6 +49,7 @@ typedef enum {
     TOKEN_NOT,
     TOKEN_TRUE,
     TOKEN_FALSE,
+    TOKEN_NONE,
     TOKEN_FOR,
     TOKEN_EACH,
     TOKEN_IN,

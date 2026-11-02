@@ -128,6 +128,7 @@ void ast_free(Node *node)
         break;
     case NODE_NUM:
     case NODE_BOOL:
+    case NODE_NONE:
         break;
     }
     free(node);
@@ -219,6 +220,9 @@ static Node *parse_primary(Parser *parser)
         node = new_node(NODE_BOOL, token.line);
         if (node != NULL) node->as.boolean.value = token.type == TOKEN_TRUE;
         return node;
+    case TOKEN_NONE:
+        advance_token(parser);
+        return new_node(NODE_NONE, token.line);
     case TOKEN_ASK:
         advance_token(parser);
         return new_node(NODE_ASK, token.line);
@@ -828,6 +832,9 @@ static void print_expression(const Node *node)
         break;
     case NODE_BOOL:
         fputs(node->as.boolean.value ? "да" : "нет", stdout);
+        break;
+    case NODE_NONE:
+        fputs("ничего", stdout);
         break;
     case NODE_VAR:
         fputs(node->as.variable.name, stdout);

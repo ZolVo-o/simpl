@@ -138,7 +138,7 @@ PYTHONMALLOC=debug ./test_compile
 сказать факториал(5)
 ```
 
-Другие примеры находятся в [`examples/`](examples/), справочник синтаксиса — в [`docs/syntax.md`](docs/syntax.md), встроенных функций — в [`docs/builtins.md`](docs/builtins.md), учебник — в [`docs/tutorial.md`](docs/tutorial.md), а рекомендации по диагностике и исправлению ошибок — в [`docs/errors.md`](docs/errors.md).
+Другие примеры находятся в [`examples/`](examples/), нормативная [спецификация версии 0.2](docs/specification.md) фиксирует поведение языка, справочник синтаксиса — в [`docs/syntax.md`](docs/syntax.md), встроенных функций — в [`docs/builtins.md`](docs/builtins.md), учебник — в [`docs/tutorial.md`](docs/tutorial.md), а рекомендации по диагностике и исправлению ошибок — в [`docs/errors.md`](docs/errors.md).
 
 ## VS Code
 

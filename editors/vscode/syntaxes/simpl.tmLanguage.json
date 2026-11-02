@@ -66,7 +66,7 @@
     },
     "constants": {
       "name": "constant.language.simpl",
-      "match": "\\b(?:да|нет)\\b"
+      "match": "\\b(?:да|нет|ничего)\\b"
     },
     "keywords": {
       "name": "keyword.control.simpl",

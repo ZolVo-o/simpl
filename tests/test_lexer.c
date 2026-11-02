@@ -44,6 +44,20 @@ static void test_lines_comments_and_operators(void)
     assert(lexer_next(&lexer).type == TOKEN_EOF);
 }
 
+static void test_none_literal(void)
+{
+    const char source[] = "пусть результат = ничего\n";
+    const TokenType expected[] = {
+        TOKEN_LET, TOKEN_IDENTIFIER, TOKEN_EQUAL, TOKEN_NONE, TOKEN_NEWLINE, TOKEN_EOF
+    };
+    Lexer lexer;
+    size_t i;
+
+    lexer_init(&lexer, source, strlen(source));
+    for (i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i)
+        assert(lexer_next(&lexer).type == expected[i]);
+}
+
 static void test_unterminated_string(void)
 {
     const char source[] = "\"текст";
@@ -94,6 +108,7 @@ int main(void)
 {
     test_let_example();
     test_lines_comments_and_operators();
+    test_none_literal();
     test_unterminated_string();
     test_indentation_tokens();
     test_invalid_dedent();

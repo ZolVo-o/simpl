@@ -34,6 +34,7 @@ int main(void)
     TEST_ASSERT(execute("сказать (1 + 2) * 3\n"));
     TEST_ASSERT(execute("сказать 2 ** 3\n"));
     TEST_ASSERT(execute("сказать 7 % 3\n"));
+    TEST_ASSERT(execute("пусть результат = ничего\nсказать тип(результат)\n"));
     TEST_ASSERT(execute("если 2 < 3\n    сказать 1\n"));
     TEST_ASSERT(execute("если да\n    сказать 1\nиначе\n    сказать 2\n"));
     TEST_ASSERT(execute("пусть x = 0\nпока x < 3\n    x = x + 1\n"));

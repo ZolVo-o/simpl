@@ -21,6 +21,7 @@ typedef enum {
     NODE_NUM,
     NODE_STR,
     NODE_BOOL,
+    NODE_NONE,
     NODE_VAR,
     NODE_ASK,
     NODE_LIST,

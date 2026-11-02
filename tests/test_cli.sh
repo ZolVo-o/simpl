@@ -389,6 +389,12 @@ printf 'сказать "Привет, 🌍"\nпусть значение = 7\nс
 output=$(./simpl run "$tmpdir/unicode.sim")
 test "$output" = "$(printf 'Привет, 🌍\n7')"
 
+printf 'пусть результат = ничего\nсказать тип(результат)\n' > "$tmpdir/none.sim"
+output=$(./simpl run "$tmpdir/none.sim")
+test "$output" = "ничего"
+./simpl compile "$tmpdir/none.sim" >/dev/null
+test "$(./simpl run "$tmpdir/none.simc")" = "$output"
+
 : > "$tmpdir/empty.sim"
 test -z "$(./simpl run "$tmpdir/empty.sim")"
 printf '# Только комментарий\n  # и ещё один\n' > "$tmpdir/comments.sim"
